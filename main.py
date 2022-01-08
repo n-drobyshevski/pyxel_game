@@ -19,19 +19,19 @@ class Hero:
         pyxel.blt(self.x, self.y, *self.skin_dict[self.skin])
      
     def update(self):
-        if pyxel.btnp(pyxel.KEY_LEFT):
+        if pyxel.btn(pyxel.KEY_LEFT):
             self.move_animation('LEFT')
             self.x = max(self.x - 2, 0)
             
-        if pyxel.btnp(pyxel.KEY_RIGHT):
+        if pyxel.btn(pyxel.KEY_RIGHT):
             self.move_animation('RIGHT')
             self.x = min(self.x + 2, pyxel.width - 16)
             
-        if pyxel.btnp(pyxel.KEY_DOWN):
+        if pyxel.btn(pyxel.KEY_DOWN):
             self.move_animation('DOWN')
             self.y = max(self.y + 2, 0)
             
-        if pyxel.btnp(pyxel.KEY_UP):
+        if pyxel.btn(pyxel.KEY_UP):
             self.move_animation('UP')
             self.y = min(self.y - 2, pyxel.width - 16)
 

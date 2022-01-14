@@ -1,3 +1,4 @@
+from operator import invert
 import pyxel
 from collections import deque
 
@@ -43,17 +44,14 @@ class Hero:
             self.move_animation('UP_1')
             self.y = min(self.y - 2, pyxel.width - 16)
         
-        # if pyxel.btn(pyxel.KEY_SPACE):
-        #     self.attack()
-        
-        self.sword.update()
+        if pyxel.btn(pyxel.KEY_SPACE):
+            # self.attack()
+            self.sword.set_visible()
+        self.sword.update(self.x, self.y,self.skin)
 
-    def attack(self):
-        self.att = True
-        for i in range(3):
-            print('attack() == ')
-            self.sword.update()
-                # time.sleep(.3)
+    # def attack(self):
+    #     print('attack() == ')
+    #     self.sword.update(self.x, self.y,self.skin)
             
         
         
@@ -78,40 +76,48 @@ class Sword:
         self.width = 8
         
     def draw(self):
-        print(self.animation_frame)
-        # if cls.active:
-        pyxel.blt(self.x, self.y, img=0, u=16,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
+        if self.active:
+            pyxel.blt(self.x, self.y, img=0, u=16,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
     
-    def update(self):
-        print('sword_update')
-        
-        # if cls.active == False:
-            # print(skin, ' -- skin before')
-            # cls.sword.direction = skin
-            # start_skin - ''
-            # if cls.direction == "L":
-                # self.skin = 'L_1'
-        #         cls.x +=-8
-        #         cls.active = True
-        #         cls.skin = 'L_1'
-        #         # self.attack('L_1')
-                
-        #     elif cls.direction == "R":
-        #         cls.x +=8
-        #         cls.active = True
-        #         cls.skin = 'R_1'
-        #     else: 
-        #         cls.skin = 'NONE'
-        #     print(cls.direction, ' -- self direction')
-        # # for i in self.attack():
-        # #    self.skin = i
-        
-        self.animation_frame = self.frame // 3 % 3
+    def update(self,x,y,direction):
+        self.x = x+10
+        self.y = y
+        # if self.active == False:
+        #     print(skin, ' -- skin before')
+        #     self.direction = skin
+        # if self.direction == "L":
+        #     self.skin = 'L_1'
+        #     self.x +=-8
+        #     self.active = True
+        #     self.skin = 'L_1'
+        #     # self.attack('L_1')
+            
+        # elif self.direction == "R":
+        #     self.x +=8
+        #     self.active = True
+        #     self.skin = 'R_1'
+        # else: 
+        #     self.skin = 'NONE'
+        # print(self.direction, ' -- self direction')
+        # for i in self.attack():
+        #    self.skin = i
+        # if self.active:
+        self.animation_frame = self.frame // 3 % 8
+        # if self.frame _:
         self.frame += 1
+        if self.animation_frame == 7:
+            self.set_invisible()
+            
         
+    def set_visible(self):
+        self.active = True
+        self.frame=0
+        
+    def set_invisible(self):
+        self.active = False
 class App:
     def __init__(self):
-        pyxel.init(160, 120,fps=8)
+        pyxel.init(160, 120,fps=30)
         pyxel.load("my_resource.pyxres")
         self.hero = Hero()
         pyxel.run(self.update, self.draw)

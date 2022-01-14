@@ -42,7 +42,6 @@ class Hero:
         if pyxel.btn(pyxel.KEY_UP):
             self.move_animation('UP_1')
             self.y = min(self.y - 2, pyxel.width - 16)
-        # self.sword.update(self.x, self.y, self.skin)
         
         # if pyxel.btn(pyxel.KEY_SPACE):
         #     self.attack()
@@ -64,71 +63,26 @@ class Hero:
         else: self.skin = start_skin[:-2] + "_2"
     
     
-class Sprite:
-    def __init__(self):
-        pass
-    
-    def draw(self):
-        pass
-    
-    def update(self):
-        pass
-    
-    @classmethod
-    def setup(cls):
-        cls.sprites = deque()
-    
-    @classmethod
-    def add(cls):
-        pass
-    
-    @classmethod
-    def draw_all(cls):
-        for sprite in cls.sprites:
-            sprite.draw()
-    
-    @classmethod
-    def update_all(cls):
-        for sprite in cls.sprites:
-            sprite.update() 
     
 class Sword:
-    width  = 8 
-    height = 8
-    x = 20
-    y = 20
-    
-    frame = 0 
-    animation_frame = 0
     
     def __init__(self):
         self.x = 20
         self.y = 20
-        self.skin_dict = {
-                           'L_1': [0,16,0,8,8],
-                           'L_2' : [0,16,8,8,8],
-                           'L_3': [0,16,16,8,8],
-                           'L_2' : [0,16,8,8,8],
-                           'L_1': [0,16,0,8,8],
-                        #    'R_1': [0,40,0,8,8],
-                        #    'R_2': [0,40,8,8,8],
-                        #    'R_3': [0,40,16,8,8],
-                           'NONE': [0,40,16,0,0],
-                           }
         self.skin = 'L_3'
         self.direction = "LEFT"
         self.active = False
         self.frame = 0 
         self.animation_frame = 0
+        self.height = 8
+        self.width = 8
         
-    @classmethod   
-    def draw(cls):
-        print(cls.animation_frame)
+    def draw(self):
+        print(self.animation_frame)
         # if cls.active:
-        pyxel.blt(cls.x, cls.y, img=0, u=16,v=cls.height*cls.animation_frame, w=cls.width,h=cls.height,colkey=000000)
+        pyxel.blt(self.x, self.y, img=0, u=16,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
     
-    @classmethod
-    def update(cls):
+    def update(self):
         print('sword_update')
         
         # if cls.active == False:
@@ -149,27 +103,12 @@ class Sword:
         #     else: 
         #         cls.skin = 'NONE'
         #     print(cls.direction, ' -- self direction')
-        # skin = cls.attack()
         # # for i in self.attack():
         # #    self.skin = i
-        # print(skin, ' -- skin')
-        # cls.skin = skin
-        # print(skin, ' -- secon after skin')
-        cls.animation_frame = cls.frame // 3 % 3
-        cls.frame += 1
         
-    
-
-    def attack(self):
-        if self.skin == "R_1":
-            return "R_2"
-        elif self.skin == 'R_2':
-            return 'R_1'
-    
-    # @classmethod
-    # def setup(cls):
-    #     cls.sword = cls()
-
+        self.animation_frame = self.frame // 3 % 3
+        self.frame += 1
+        
 class App:
     def __init__(self):
         pyxel.init(160, 120,fps=8)
@@ -180,7 +119,6 @@ class App:
         self.setup()
 
     def setup(self):
-        # Sword.setup()
         pass
         
     def update(self):

@@ -42,13 +42,13 @@ class Hero:
 
 class App:
     def __init__(self):
-        pyxel.init(160, 120,fps=8)
+        pyxel.init(160, 120,fps=30)
         pyxel.load("my_resource.pyxres")
         self.hero = Hero()
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        if pyxel.btnp(pyxel.KEY_Q):
+        if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
             
         self.hero.update()

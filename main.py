@@ -44,16 +44,11 @@ class Hero:
             self.move_animation('UP_1')
             self.y = min(self.y - 2, pyxel.width - 16)
         
-        if pyxel.btn(pyxel.KEY_SPACE):
+        if pyxel.btn(pyxel.KEY_Q):
             self.sword.set_visible()
             
         self.sword.update(self.x, self.y,self.skin)
-
-    # def attack(self):
-    #     print('attack() == ')
-    #     self.sword.update(self.x, self.y,self.skin)
-            
-        
+           
         
     def move_animation(self, start_skin):
         if "1" not in self.skin:
@@ -75,19 +70,19 @@ class Sword:
         self.height = 8
         self.width = 8
         self.u=0
+        
+        
     def draw(self):
         if self.active:
             pyxel.blt(self.x, self.y, img=0, u=self.u,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
     
+    
     def update(self,x,y,direction):
         self.y = y
         if "LEFT" in direction:
-            print('Left')
             self.u = 16
             self.x = x-8
-            
         elif "RIGHT" in direction:
-            print('Right')
             self.x = x + 8
             self.u = 24
         else: 
@@ -118,7 +113,7 @@ class App:
         pass
         
     def update(self):
-        if pyxel.btnp(pyxel.KEY_Q):
+        if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
             
         self.hero.update()

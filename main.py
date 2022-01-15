@@ -5,21 +5,27 @@ from collections import deque
 class Hero:
     def __init__(self):
         self.x = 20
-        self.y = 20
+        self.y = 50
         self.active = False
         self.frame = 0 
         self.animation_frame = 0
         self.height = 8
         self.width = 8
         self.u=0
-        
+        self.jump_height = 10
         self.sword = Sword()
-    
+        self.jump = False
+        self.fall = False
+        self.d_y = 0
+        
+        
     def draw(self):
         pyxel.blt(self.x, self.y, img=0, u=self.u,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
         self.sword.draw()
      
     def update(self):
+        top = False
+        fall = False
         if pyxel.btn(pyxel.KEY_LEFT):
             self.u = 8
             self.x = max(self.x - 1, 0)
@@ -33,12 +39,30 @@ class Hero:
             self.animation_frame = self.frame // 3 % 2
             self.frame += 1
             
-        # if pyxel.btn(pyxel.KEY_UP):
-        #     self.y = min(self.y - 2, pyxel.width - 16)
-        
+        if pyxel.btn(pyxel.KEY_SPACE) and self.jump == False:       
+            if self.jump== False:
+                print(1)
+                self.jump = True
+                self.d_y = -1
+                
+        if self.y == 29: 
+            self.fall = True 
+
+        if self.fall == True and self.y < 70:
+            print(2)
+            self.d_y = 1
+
+        elif self.y == 71: 
+            self.d_y = 0
+            self.y -=1
+            self.fall = False
+            self.jump = False
+            
         if pyxel.btn(pyxel.KEY_Q):
             self.sword.set_visible()
-        
+        print(self.y, self.jump, self.d_y)
+        self.y += self.d_y
+    
         self.sword.update(self.x, self.y,self.u)
     
     

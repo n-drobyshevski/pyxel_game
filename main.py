@@ -57,7 +57,7 @@ class Hero:
             self.y -=1
             self.fall = False
             self.jump = False
-            
+
         if pyxel.btn(pyxel.KEY_Q):
             self.sword.set_visible()
         print(self.y, self.jump, self.d_y)
@@ -95,9 +95,9 @@ class Sword:
         else: 
             self.u = 50
             
-        self.animation_frame = self.frame // 3 % 8
+        self.animation_frame = self.frame // 3 % 4
         self.frame += 1
-        if self.animation_frame == 7:
+        if self.animation_frame == 3:
             self.set_invisible()
             
         
@@ -109,7 +109,7 @@ class Sword:
         self.active = False
 class App:
     def __init__(self):
-        pyxel.init(160, 120,fps=40)
+        pyxel.init(160, 120,fps=30)
         pyxel.load("my_resource.pyxres")
         self.hero = Hero()
         pyxel.run(self.update, self.draw)
@@ -128,5 +128,7 @@ class App:
     def draw(self):
         pyxel.cls(0)
         self.hero.draw()
-
+        pyxel.blt(60,60,1,0,0,4,4)
+        pyxel.blt(60,40,1,0,0,8,8)
+        pyxel.blt(60,20,1,0,0,16,16)
 App()

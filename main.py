@@ -45,8 +45,8 @@ class Hero:
             self.y = min(self.y - 2, pyxel.width - 16)
         
         if pyxel.btn(pyxel.KEY_SPACE):
-            # self.attack()
             self.sword.set_visible()
+            
         self.sword.update(self.x, self.y,self.skin)
 
     # def attack(self):
@@ -74,36 +74,26 @@ class Sword:
         self.animation_frame = 0
         self.height = 8
         self.width = 8
-        
+        self.u=0
     def draw(self):
         if self.active:
-            pyxel.blt(self.x, self.y, img=0, u=16,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
+            pyxel.blt(self.x, self.y, img=0, u=self.u,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=000000)
     
     def update(self,x,y,direction):
-        self.x = x+10
         self.y = y
-        # if self.active == False:
-        #     print(skin, ' -- skin before')
-        #     self.direction = skin
-        # if self.direction == "L":
-        #     self.skin = 'L_1'
-        #     self.x +=-8
-        #     self.active = True
-        #     self.skin = 'L_1'
-        #     # self.attack('L_1')
+        if "LEFT" in direction:
+            print('Left')
+            self.u = 16
+            self.x = x-8
             
-        # elif self.direction == "R":
-        #     self.x +=8
-        #     self.active = True
-        #     self.skin = 'R_1'
-        # else: 
-        #     self.skin = 'NONE'
-        # print(self.direction, ' -- self direction')
-        # for i in self.attack():
-        #    self.skin = i
-        # if self.active:
+        elif "RIGHT" in direction:
+            print('Right')
+            self.x = x + 8
+            self.u = 24
+        else: 
+            self.u = 50
+            
         self.animation_frame = self.frame // 3 % 8
-        # if self.frame _:
         self.frame += 1
         if self.animation_frame == 7:
             self.set_invisible()

@@ -1,11 +1,9 @@
-from operator import invert
 import pyxel
-from collections import deque
 
+
+MIN_X = 120
 class Hero:
     def __init__(self):
-        self.x = 20
-        self.y = 50
         self.active = False
         self.frame = 0 
         self.animation_frame = 0
@@ -17,6 +15,8 @@ class Hero:
         self.jump = False
         self.fall = False
         self.d_y = 0
+        self.x = 20
+        self.y =MIN_X-self.height
         
         
     def draw(self):
@@ -24,8 +24,6 @@ class Hero:
         self.sword.draw()
      
     def update(self):
-        top = False
-        fall = False
         if pyxel.btn(pyxel.KEY_LEFT):
             self.u = 8
             self.x = max(self.x - 1, 0)
@@ -39,32 +37,39 @@ class Hero:
             self.animation_frame = self.frame // 3 % 2
             self.frame += 1
             
-        if pyxel.btn(pyxel.KEY_SPACE) and self.jump == False:       
-            if self.jump== False:
-                print(1)
-                self.jump = True
-                self.d_y = -1
-                
-        if self.y == 29: 
+        if pyxel.btn(pyxel.KEY_SPACE) and self.jump == False:   
+            print(' key event ')   
+            self.jump = True
+            self.d_y = -1   #if space pressed begins to add -1 to self.y
+
+        # if max jump height achived   
+        if self.y == 40: 
             self.fall = True 
 
-        if self.fall == True and self.y < 70:
-            print(2)
+        # falling
+        if self.fall == True and self.y < MIN_X-self.height:
             self.d_y = 1
 
-        elif self.y == 71: 
+        # stop to falling
+        elif self.fall == True and self.y == MIN_X-self.height: 
             self.d_y = 0
-            self.y -=1
+            # self.y -=1
             self.fall = False
             self.jump = False
 
         if pyxel.btn(pyxel.KEY_Q):
             self.sword.set_visible()
+            ans= self.get_tile(10,10)  
+
         print(self.y, self.jump, self.d_y)
+
         self.y += self.d_y
     
-        self.sword.update(self.x, self.y,self.u)
+        # self.sword.update(self.x, self.y,self.u)
     
+    def get_tile(self,tile_x, tile_y):
+        return pyxel.tilemap(0).pget(tile_x, tile_y)
+        
     
 class Sword:
     
@@ -107,9 +112,10 @@ class Sword:
         
     def set_invisible(self):
         self.active = False
+    
 class App:
     def __init__(self):
-        pyxel.init(160, 120,fps=30)
+        pyxel.init(128, 128, title="Pyxel Platformer")
         pyxel.load("my_resource.pyxres")
         self.hero = Hero()
         pyxel.run(self.update, self.draw)
@@ -127,8 +133,8 @@ class App:
 
     def draw(self):
         pyxel.cls(0)
+        pyxel.camera()
+        pyxel.bltm(0, 0, 0, 0, 0, 128, 128, 0)
         self.hero.draw()
-        pyxel.blt(60,60,1,0,0,4,4)
-        pyxel.blt(60,40,1,0,0,8,8)
-        pyxel.blt(60,20,1,0,0,16,16)
+        
 App()

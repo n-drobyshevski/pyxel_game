@@ -4,6 +4,7 @@ import pyxel
 WALL_TILE_X = 4
 MIN_X = 120
 TRANSPARENT_COLOR = 14
+JUMP_HEIGHT = 12
 
 def get_tile(tile_x, tile_y):
     return pyxel.tilemap(0).pget(tile_x, tile_y)
@@ -23,31 +24,36 @@ def detect_collision(x,y):
 def move(x,y,d_x,d_y):
     abs_d_x = abs(d_x)
     abs_d_y = abs(d_y)
+    collision_side = [0,0]
     if abs_d_x > abs_d_y:
         delta = 1 if d_x > 0 else -1
         for _ in range(abs_d_x):
             if detect_collision(x+delta, y):
+                collision_side[0] = (1 if d_x > 0 else -1)
                 break
             x += delta
         delta = 1 if d_y > 0 else -1
         print(delta, ' -- delta y')
         for _ in range(abs_d_y):
             if detect_collision(x, y+delta):
+                collision_side[1] = (1 if d_y > 0 else -1)
                 break
             y += delta
     else:
         delta = 1 if d_y > 0 else -1
         for _ in range(abs_d_y):
             if detect_collision(x, y + delta):
+                collision_side[1] = (1 if d_y > 0 else -1)
                 break
             y += delta
         delta = 1 if d_x > 0 else -1
         for _ in range(abs_d_x):
             if detect_collision(x + delta, y):
+                collision_side[0] = (1 if d_x > 0 else -1)
                 break
             x += delta
         d_x = 0
-    return x,y,d_x,d_y
+    return x,y,d_x,d_y, collision_side
 
 
 class Hero:
@@ -59,12 +65,12 @@ class Hero:
         self.height = 8
         self.jump_height = 10
         self.sword = Sword()
-        self.jump = False
+        self.jump_counter = 0
         self.d_y = 0
         self.d_x = 0
         self.x = 20
         self.y =MIN_X-self.height
-        self.start_y = MIN_X - self.height
+        self.start_y = 0
         self.falling = False
         
     def draw(self):
@@ -88,18 +94,27 @@ class Hero:
             self.frame += 1
         
         self.d_y = min(self.d_y + 1, 3)
-        if pyxel.btn(pyxel.KEY_SPACE):   
+        if pyxel.btn(pyxel.KEY_SPACE) and self.start_y - JUMP_HEIGHT<= self.y and not self.falling:   
             print(' key event ')   
-            self.start_y = self.y
-            self.jump = True
+            print(self.jump_counter)
+            # self.start_y = self.y
+            self.jump_counter +=1
             self.d_y = -2   #if space pressed begins to add -1 to self.y
+        if self.start_y - JUMP_HEIGHT == self.y:
+            self.falling = True
 
         # todo : add acceleration mechanic to delta y 
         # if max jump height achived   
         # todo : fix jump height
 
-        self.x, self.y, self.d_x, self.d_y = move(self.x, self.y, self.d_x, self.d_y)
+        self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
         
+        if collision_side[1] == 1:
+            print(self.start_y,' ground ')
+            self.start_y = self.y
+            self.jump_counter = 0
+            self.falling = False
+
         self.is_falling = self.y > last_y
         if pyxel.btn(pyxel.KEY_Q):
             # todo: fix multiply clicks
@@ -110,7 +125,7 @@ class Hero:
             self.y = 0
         if self.x < 0: 
             self.x = 0
-            
+
         # print(self.y, self.jump, self.d_y)
 
         self.sword.update(self.x, self.y, self.direction)

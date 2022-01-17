@@ -105,6 +105,12 @@ class Hero:
             # todo: fix multiply clicks
             self.sword.set_visible()
 
+        
+        if self.y < 0:
+            self.y = 0
+        if self.x < 0: 
+            self.x = 0
+            
         # print(self.y, self.jump, self.d_y)
 
         self.sword.update(self.x, self.y, self.direction)

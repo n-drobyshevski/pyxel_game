@@ -146,28 +146,25 @@ class Sword:
         self.active = False
         self.frame = 0 
         self.animation_frame = 0
-        self.height = 8
         self.width = 8
         self.u=0
         self.direction = 1
         
         
     def draw(self):
+        v = self.animation_frame*8
+        w = 8 if self.direction > 0 else -8
         if self.active:
-            pyxel.blt(self.x, self.y, img=0, u=self.u,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=TRANSPARENT_COLOR)
+            pyxel.blt(self.x, self.y, img=0, u=16,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
     
     
     def update(self,x,y,direction):
         self.y = y
         self.direction = direction
-        if direction == 1:
-            self.u = 16
+        if direction == 1:  
             self.x = x-8
         elif direction == -1:
             self.x = x + 8
-            self.u = 24
-        else: 
-            self.u = 50
             
         self.animation_frame = self.frame // 3 % 4
         self.frame += 1

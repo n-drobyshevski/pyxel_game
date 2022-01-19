@@ -67,8 +67,8 @@ def is_spike(x,y):
         return True
     return False
 
-class Hero:
-    def __init__(self):
+class Player:
+    def __init__(self,x,y):
         self.direction = -1
         self.frame = 0 
         self.height = 8
@@ -76,8 +76,8 @@ class Hero:
         self.sword = Sword()
         self.d_y = 0
         self.d_x = 0
-        self.x = 20
-        self.y =110
+        self.x = x
+        self.y =y
         self.start_y = 0
         self.falling = False
         self.is_alive = True
@@ -94,7 +94,6 @@ class Hero:
         wall_x = [0,0]
         last_y = self.y
         if is_spike(self.x, self.y):
-            print('spikes')
             self.is_alive = False
         if pyxel.btn(pyxel.KEY_LEFT):
             self.direction = 1
@@ -190,7 +189,8 @@ class App:
     def __init__(self):
         pyxel.init(128, 128, title="Pyxel Platformer", fps = 40)
         pyxel.load("my_resource.pyxres")
-        self.hero = Hero()
+        global player
+        player = Player(0,0)
         pyxel.run(self.update, self.draw)
         self.setup()
 
@@ -199,10 +199,12 @@ class App:
         
     def update(self):
         pyxel.mouse(visible=True)
-        if pyxel.btnp(pyxel.KEY_ESCAPE) or self.hero.is_alive == False:
+        if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
-            
-        self.hero.update()
+        if player.is_alive == False:
+            reset()
+            return
+        player.update()
 
     def draw(self):
         pyxel.cls(0)
@@ -211,6 +213,15 @@ class App:
         
         # Draw characters
         pyxel.camera(scroll_x, 0)
-        self.hero.draw()
-        
+        player.draw()
+
+def reset():
+    global scroll_x
+    scroll_x = 0
+    player.x = 0
+    player.y = 0
+    player.d_x = 0
+    player.d_y = 0
+    player.is_alive = True
+
 App()

@@ -100,8 +100,8 @@ class Hero:
 
         self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
         print(last_y, self.y, ' -- last y, current')
-        if self.y > last_y :
-                self.falling = True
+        if self.y > last_y or collision_side[1] == -1:
+            self.falling = True
         
         if collision_side[1] == 1:
             self.start_y = self.y
@@ -111,9 +111,6 @@ class Hero:
             # todo: fix multiply clicks
             self.sword.set_visible()
 
-        
-        # if self.y < 0:
-        #     self.y = 0
         if self.x < 0: 
             self.x = 0
 

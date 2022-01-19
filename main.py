@@ -57,10 +57,8 @@ def move(x,y,d_x,d_y):
 
 class Hero:
     def __init__(self):
-        self.active = False
         self.direction = -1
         self.frame = 0 
-        self.animation_frame = 0
         self.height = 8
         self.jump_height = 10
         self.sword = Sword()
@@ -108,8 +106,8 @@ class Hero:
             self.falling = False
 
         if pyxel.btn(pyxel.KEY_Q):
-            # todo: fix multiply clicks
-            self.sword.set_visible()
+            if self.sword.active == False:
+                self.sword.set_visible()
 
         if self.x < 0: 
             self.x = 0

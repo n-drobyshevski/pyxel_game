@@ -3,7 +3,11 @@ import pyxel
 
 WALL_TILE_X = 4
 TRANSPARENT_COLOR = 14
+SCROLL_BORDER_X_R = 80
+SCROLL_BORDER_X_L = 54
 JUMP_HEIGHT = 12
+
+scroll_x = 0
 
 def get_tile(tile_x, tile_y):
     return pyxel.tilemap(0).pget(tile_x, tile_y)
@@ -31,8 +35,7 @@ def move(x,y,d_x,d_y):
                 collision_side[0] = (1 if d_x > 0 else -1)
                 break
             x += delta
-        delta = 1 if d_y > 0 else -1
-        print(delta, ' -- delta y')
+        delta = 1 if d_y > 0 else -1    
         for _ in range(abs_d_y):
             if detect_collision(x, y+delta):
                 collision_side[1] = (1 if d_y > 0 else -1)
@@ -72,21 +75,22 @@ class Hero:
     def draw(self):
         v = (1 if self.falling else self.frame// 3 % 2) * 8 +8
         w = -8 if self.direction > 0 else 8
-        # todo: weird +8 
+        # TODO: weird +8 
         pyxel.blt(self.x, self.y, img=0, u=0,v=v, w=w,h=self.height,colkey=TRANSPARENT_COLOR)
         self.sword.draw()
      
     def update(self):
+        global scroll_x
         wall_x = [0,0]
         last_y = self.y
         if pyxel.btn(pyxel.KEY_LEFT):
             self.direction = 1
-            self.d_x = -1
+            self.d_x = -2
             self.frame += 1
             
         if pyxel.btn(pyxel.KEY_RIGHT):
             self.direction = -1
-            self.d_x = 1
+            self.d_x = 2
             self.frame += 1
         
         self.d_y = min(self.d_y + 1, 3)
@@ -106,9 +110,17 @@ class Hero:
             wall_x[1] = detect_collision(self.x-8, self.y)
             if self.sword.active == False:
                 self.sword.set_visible(wall_x)
-
-        if self.x < 0: 
+    
+        if self.x < 0:
             self.x = 0
+        if self.x > 248*8:
+            self.x = 248*8
+        
+        if self.x > scroll_x + SCROLL_BORDER_X_R:
+            scroll_x = min(self.x - SCROLL_BORDER_X_R, 240 * 8)
+
+        elif self.x < scroll_x + SCROLL_BORDER_X_L and scroll_x >= 0:
+            scroll_x = max(self.x - SCROLL_BORDER_X_L, 0)
 
         self.sword.update(self.x, self.y, self.direction)
     
@@ -179,7 +191,10 @@ class App:
     def draw(self):
         pyxel.cls(0)
         pyxel.camera()
-        pyxel.bltm(0, 0, 0, 0, 0, 128, 128,TRANSPARENT_COLOR)
+        pyxel.bltm(0, 0, 0, scroll_x, 0, 128, 128,TRANSPARENT_COLOR)
+        
+        # Draw characters
+        pyxel.camera(scroll_x, 0)
         self.hero.draw()
         
 App()

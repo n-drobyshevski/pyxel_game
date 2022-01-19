@@ -1,11 +1,13 @@
 import pyxel
 
 
-WALL_TILE_X = 4
-TRANSPARENT_COLOR = 14
+WALL_TILE_X = 6
+TRANSPARENT_COLOR = 0
 SCROLL_BORDER_X_R = 80
 SCROLL_BORDER_X_L = 54
 JUMP_HEIGHT = 12
+SPIKE_X = [2,3] 
+SPIKE_Y = [5,6] 
 
 scroll_x = 0
 
@@ -57,6 +59,13 @@ def move(x,y,d_x,d_y):
         d_x = 0
     return x,y,d_x,d_y, collision_side
 
+def is_spike(x,y):
+    x = x // 8
+    y = y // 8
+    tile = pyxel.tilemap(0).pget(x,y)
+    if tile[0] in SPIKE_X and tile[1] in SPIKE_Y:
+        return True
+    return False
 
 class Hero:
     def __init__(self):
@@ -71,6 +80,7 @@ class Hero:
         self.y =110
         self.start_y = 0
         self.falling = False
+        self.is_alive = True
         
     def draw(self):
         v = (1 if self.falling else self.frame// 3 % 2) * 8 +8
@@ -83,6 +93,9 @@ class Hero:
         global scroll_x
         wall_x = [0,0]
         last_y = self.y
+        if is_spike(self.x, self.y):
+            print('spikes')
+            self.is_alive = False
         if pyxel.btn(pyxel.KEY_LEFT):
             self.direction = 1
             self.d_x = -2
@@ -115,6 +128,8 @@ class Hero:
             self.x = 0
         if self.x > 248*8:
             self.x = 248*8
+        if self.y > 128-self.height:
+            self.y = 128-self.height
         
         if self.x > scroll_x + SCROLL_BORDER_X_R:
             scroll_x = min(self.x - SCROLL_BORDER_X_R, 240 * 8)
@@ -170,6 +185,7 @@ class Sword:
     def set_invisible(self):
         self.active = False
     
+
 class App:
     def __init__(self):
         pyxel.init(128, 128, title="Pyxel Platformer", fps = 40)
@@ -183,7 +199,7 @@ class App:
         
     def update(self):
         pyxel.mouse(visible=True)
-        if pyxel.btnp(pyxel.KEY_ESCAPE):
+        if pyxel.btnp(pyxel.KEY_ESCAPE) or self.hero.is_alive == False:
             pyxel.quit()
             
         self.hero.update()

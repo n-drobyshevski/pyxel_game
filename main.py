@@ -77,7 +77,7 @@ class Hero:
         self.sword.draw()
      
     def update(self):
-        
+        wall_x = [0,0]
         last_y = self.y
         if pyxel.btn(pyxel.KEY_LEFT):
             self.direction = 1
@@ -91,13 +91,9 @@ class Hero:
         
         self.d_y = min(self.d_y + 1, 3)
         if pyxel.btn(pyxel.KEY_SPACE) and self.start_y - JUMP_HEIGHT< self.y and self.falling == False:   
-            print(' key event ') 
-            print(self.y, self.start_y - JUMP_HEIGHT)
-            print(self.falling)
             self.d_y = -6   #if space pressed begins to add -1 to self.y
 
         self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
-        print(last_y, self.y, ' -- last y, current')
         if self.y > last_y or collision_side[1] == -1:
             self.falling = True
         
@@ -106,13 +102,13 @@ class Hero:
             self.falling = False
 
         if pyxel.btn(pyxel.KEY_Q):
+            wall_x[0] = detect_collision(self.x+8, self.y)
+            wall_x[1] = detect_collision(self.x-8, self.y)
             if self.sword.active == False:
-                self.sword.set_visible()
+                self.sword.set_visible(wall_x)
 
         if self.x < 0: 
             self.x = 0
-
-        # print(self.y, self.jump, self.d_y)
 
         self.sword.update(self.x, self.y, self.direction)
     
@@ -127,6 +123,7 @@ class Sword:
         self.height = 8
         self.width = 8
         self.u=0
+        self.direction = 1
         
         
     def draw(self):
@@ -136,6 +133,7 @@ class Sword:
     
     def update(self,x,y,direction):
         self.y = y
+        self.direction = direction
         if direction == 1:
             self.u = 16
             self.x = x-8
@@ -151,9 +149,11 @@ class Sword:
             self.set_invisible()
             
         
-    def set_visible(self):
-        self.active = True
-        self.frame=0
+    def set_visible(self,wall):
+        index = (1 if self.direction == 1 else 0)
+        if wall[index] == False:
+            self.active = True
+            self.frame=0
         
     def set_invisible(self):
         self.active = False

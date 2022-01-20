@@ -7,6 +7,7 @@ SCROLL_BORDER_X_R = 80
 SCROLL_BORDER_X_L = 54
 JUMP_HEIGHT = 12
 TILE_SPAWN1 = (4, 2)
+MAP_MAX_X =  240 * 8
 SPIKE_X = [2,3] 
 SPIKE_Y = [5,6] 
 
@@ -68,6 +69,9 @@ def is_spike(x,y):
         return True
     return False
 
+
+# TODO: replace with get_tile()
+
 def is_wall(x,y):
     x = x // 8
     y = y // 8
@@ -84,6 +88,40 @@ def spawn_enemy():
             tile = get_tile(x, y)
             if tile == TILE_SPAWN1:
                 enemies.append(Enemy(x * 8, y * 8))
+
+def is_pit(x,y,direction):
+    if not (y +16 < 128 and x -8 > 0 and x +16 < MAP_MAX_X):
+        return False
+
+    if direction > 0:
+        if is_wall(x+8,y+4):
+            return False
+    else: 
+        if is_wall(x-1,y+4):
+            return False
+
+    y1 = y +12
+    print(' -------------------- 12')
+    print(x,y1, ' -- is pit x,y'  )
+    if direction > 0:
+        if is_wall(x+8,y1):
+            return False
+    else:
+        if is_wall(x-1,y1):
+            return False
+
+    y2 = y +16
+    print(' -------------------- 20')
+    print(x,y2, ' -- is pit x,y'  )
+    if direction > 0:
+        if is_wall(x+4,y2):
+            return False
+    else:
+        print('else')
+        if is_wall(x-1,y2):
+            return False
+    print( 'is_pit')
+    return True
 
 
 def cleanup_list(list):
@@ -158,7 +196,7 @@ class Player:
             self.y = 128-self.height
         
         if self.x > scroll_x + SCROLL_BORDER_X_R:
-            scroll_x = min(self.x - SCROLL_BORDER_X_R, 240 * 8)
+            scroll_x = min(self.x - SCROLL_BORDER_X_R, MAP_MAX_X)
 
         elif self.x < scroll_x + SCROLL_BORDER_X_L and scroll_x >= 0:
             scroll_x = max(self.x - SCROLL_BORDER_X_L, 0)
@@ -221,10 +259,15 @@ class Enemy:
     def update(self):
         self.d_x = self.direction
         self.d_y = min(self.d_y + 1, 3)
+        if is_pit(self.x, self.y, self.direction):
+            self.direction = self.direction* -1
         if self.direction < 0 and is_wall(self.x - 1, self.y + 4):
             self.direction = 1
         elif self.direction > 0 and is_wall(self.x + 8, self.y + 4):
             self.direction = -1
+        if self.x < 0:
+            self.x = 0 
+            self.direction = 1
         self.frame += 1
         self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
 

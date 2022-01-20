@@ -335,13 +335,14 @@ class App:
             enemy.draw()
 
 def reset():
-    global scroll_x
+    global scroll_x, enemies
     scroll_x = 0
     player.x = 0
     player.y = 0
     player.d_x = 0
     player.d_y = 0
     player.is_alive = True
+    enemies = []
     spawn_enemy()
 
 App()

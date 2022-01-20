@@ -101,8 +101,6 @@ def is_pit(x,y,direction):
             return False
 
     y1 = y +12
-    print(' -------------------- 12')
-    print(x,y1, ' -- is pit x,y'  )
     if direction > 0:
         if is_wall(x+8,y1):
             return False
@@ -111,18 +109,33 @@ def is_pit(x,y,direction):
             return False
 
     y2 = y +16
-    print(' -------------------- 20')
-    print(x,y2, ' -- is pit x,y'  )
     if direction > 0:
         if is_wall(x+4,y2):
             return False
     else:
-        print('else')
         if is_wall(x-1,y2):
             return False
-    print( 'is_pit')
     return True
 
+def can_jump(x,y,direction):
+    if not (y +16 < 128 and x -8 > 0 and x +16 < MAP_MAX_X):
+        return False
+
+    if direction > 0:
+        if not is_wall(x+8,y+4):
+            return False
+    else: 
+        if not is_wall(x-1,y+4):
+            return False
+    y1 = y -12
+    if direction > 0:
+        if is_wall(x+8,y1):
+            return False
+    else:
+        if is_wall(x-1,y1):
+            return False
+    
+    return True
 
 def cleanup_list(list):
     i = 0
@@ -261,10 +274,19 @@ class Enemy:
         self.d_y = min(self.d_y + 1, 3)
         if is_pit(self.x, self.y, self.direction):
             self.direction = self.direction* -1
-        if self.direction < 0 and is_wall(self.x - 1, self.y + 4):
+        if self.direction < 0 and is_wall(self.x - 1, self.y + 4) and can_jump(self.x,self.y,self.direction) == False:
             self.direction = 1
-        elif self.direction > 0 and is_wall(self.x + 8, self.y + 4):
+        elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
+            print("jump")
+            self.d_y = -3
+            self.d_x = -4
+        elif self.direction > 0 and is_wall(self.x + 8, self.y + 4 and can_jump(self.x,self.y,self.direction)== False):
             self.direction = -1
+        elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
+            print("jump")
+            self.d_y = -3
+            self.d_x = 12
+
         if self.x < 0:
             self.x = 0 
             self.direction = 1
@@ -273,9 +295,7 @@ class Enemy:
 
     def draw(self):
         v = self.frame % 2 * 8 +8
-        print(v)    
         w = -6 if self.direction < 0 else 6 
-        print(v)
         pyxel.blt(self.x, self.y, img=0, u=50,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
 
 class App:

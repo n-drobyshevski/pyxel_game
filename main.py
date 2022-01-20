@@ -1,16 +1,17 @@
 import pyxel
-
+import math
 
 WALL_TILE_X = 6
 TRANSPARENT_COLOR = 0
 SCROLL_BORDER_X_R = 80
 SCROLL_BORDER_X_L = 54
 JUMP_HEIGHT = 12
+TILE_SPAWN1 = (4, 2)
 SPIKE_X = [2,3] 
 SPIKE_Y = [5,6] 
 
 scroll_x = 0
-
+enemies =[] 
 def get_tile(tile_x, tile_y):
     return pyxel.tilemap(0).pget(tile_x, tile_y)
 
@@ -67,6 +68,32 @@ def is_spike(x,y):
         return True
     return False
 
+def is_wall(x,y):
+    x = x // 8
+    y = y // 8
+    tile = pyxel.tilemap(0).pget(x,y)
+    if tile[0] >= WALL_TILE_X:
+        return True
+    return False
+
+def spawn_enemy():
+    left_x = math.ceil(0 / 8)
+    right_x = math.floor(320 / 8)
+    for x in range(left_x, right_x + 1):
+        for y in range(16):
+            tile = get_tile(x, y)
+            if tile == TILE_SPAWN1:
+                enemies.append(Enemy(x * 8, y * 8))
+
+
+def cleanup_list(list):
+    i = 0
+    while i < len(list):
+        elem = list[i]
+        if elem.is_alive:
+            i += 1
+        else:
+            list.pop(i)
 class Player:
     def __init__(self,x,y):
         self.direction = -1
@@ -83,8 +110,8 @@ class Player:
         self.is_alive = True
         
     def draw(self):
-        v = (1 if self.falling else self.frame// 3 % 2) * 8 +8
-        w = -8 if self.direction > 0 else 8
+        v = (1 if self.falling else self.frame// 3 % 2) * 8 +8 
+        w = 8 if self.direction < 0 else -8
         # TODO: weird +8 
         pyxel.blt(self.x, self.y, img=0, u=0,v=v, w=w,h=self.height,colkey=TRANSPARENT_COLOR)
         self.sword.draw()
@@ -181,6 +208,32 @@ class Sword:
     def set_invisible(self):
         self.active = False
     
+class Enemy:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.d_x = 0
+        self.d_y = 0
+        self.direction = -1
+        self.is_alive = True
+        self.frame = 0
+
+    def update(self):
+        self.d_x = self.direction
+        self.d_y = min(self.d_y + 1, 3)
+        if self.direction < 0 and is_wall(self.x - 1, self.y + 4):
+            self.direction = 1
+        elif self.direction > 0 and is_wall(self.x + 8, self.y + 4):
+            self.direction = -1
+        self.frame += 1
+        self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
+
+    def draw(self):
+        v = self.frame % 2 * 8 +8
+        print(v)    
+        w = -6 if self.direction < 0 else 6 
+        print(v)
+        pyxel.blt(self.x, self.y, img=0, u=50,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
 
 class App:
     def __init__(self):
@@ -188,6 +241,7 @@ class App:
         pyxel.load("my_resource.pyxres")
         global player
         player = Player(0,0)
+        spawn_enemy()
         pyxel.run(self.update, self.draw)
         self.setup()
 
@@ -202,6 +256,9 @@ class App:
             reset()
             return
         player.update()
+        for enemy in enemies:
+            enemy.update()
+        cleanup_list(enemies)
 
     def draw(self):
         pyxel.cls(0)
@@ -211,6 +268,8 @@ class App:
         # Draw characters
         pyxel.camera(scroll_x, 0)
         player.draw()
+        for enemy in enemies:
+            enemy.draw()
 
 def reset():
     global scroll_x
@@ -220,5 +279,6 @@ def reset():
     player.d_x = 0
     player.d_y = 0
     player.is_alive = True
+    spawn_enemy()
 
 App()

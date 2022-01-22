@@ -255,7 +255,6 @@ class Sword:
             
         self.animation_frame = self.frame // 3 % 4
         self.frame += 1
-        print(self.counter)
         if self.active and self.detect_player():    
             player.is_alive = False
         if self.active and self.detect_enemy():    
@@ -300,12 +299,14 @@ class Sword:
         player_coords = player.get_coords()
         if self.direction > 0:
             for [x, y] in player_coords:
-                if self.x+8  == x and self.y+4 == y:
-                    return True
+                for xi in range(self.x, self.x +8):
+                    if xi  == x and self.y+4 == y:
+                        return True
         if self.direction < 0:
             for [x, y] in player_coords:
-                if self.x-1  == x and self.y+4 == y:
-                    return True
+                for xi in range(self.x, self.x -9):
+                    if xi  == x and self.y+4 == y:
+                        return True
         return False
 class Enemy:
     def __init__(self, x, y):

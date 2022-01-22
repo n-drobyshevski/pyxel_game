@@ -14,6 +14,8 @@ SPIKE_Y = [5,6]
 
 scroll_x = 0
 enemies =[] 
+
+
 def get_tile(tile_x, tile_y):
     return pyxel.tilemap(0).pget(tile_x, tile_y)
 
@@ -82,24 +84,16 @@ def is_wall(x,y):
     return False
 
 def spawn_enemy():
+    i = 0
     left_x = math.ceil(0 / 8)
     right_x = math.floor(320 / 8)
     for x in range(left_x, right_x + 1):
         for y in range(16):
             tile = get_tile(x, y)
             if tile == TILE_SPAWN1:
-                enemies.append(Enemy(x * 8, y * 8))
+                enemies.append(Enemy(x * 8, y * 8,i))
 
 def is_pit(x,y,direction):
-    # check if there is wall ahead
-    y0 = y+4
-    if direction > 0:
-        if is_wall(x+8,y0):
-            return False
-    else: 
-        if is_wall(x-1,y0):
-            return False
-    # check if there is wall one block ahead and one block down
     y1 = y +8
     if direction > 0:
         if is_wall(x+8,y1):
@@ -107,14 +101,14 @@ def is_pit(x,y,direction):
     else:
         if is_wall(x-1,y1):
             return False
-
+    
+    y2 = y +16
     # return false if there is map border one block ahead and two block down
-    if not (y +16 < 128 and x -8 > 0 and x +16 < MAP_MAX_X):
+    if not (y2 < 128):
         return True
     # check if there is wall one block ahead and two block down
-    y2 = y +16
     if direction > 0:
-        if is_wall(x+4,y2):
+        if is_wall(x+8,y2):
             return False
     else:
         if is_wall(x-1,y2):
@@ -122,23 +116,16 @@ def is_pit(x,y,direction):
     return True
 
 def can_jump(x,y,direction):
-    if not (y +16 < 128 and x -8 > 0 and x +16 < MAP_MAX_X):
+    """ assumed that there is one block in front of personage"""
+    if x - 8 < 0:
         return False
 
     if direction > 0:
-        if not is_wall(x+8,y+4):
-            return False
-    else: 
-        if not is_wall(x-1,y+4):
-            return False
-    y1 = y -12
-    if direction > 0:
-        if is_wall(x+8,y1):
+        if is_wall(x+8,y-8):
             return False
     else:
-        if is_wall(x-1,y1):
+        if is_wall(x-1,y-8):
             return False
-    
     return True
 
 def cleanup_list(list):
@@ -224,8 +211,6 @@ class Player:
 
         self.sword.update(self.x, self.y, self.direction,0)
         if self.is_alive == False:
-            for enemy in enemies:
-                print(enemy)
             self.y += 4
             time.sleep(2)
             self.can_reset = True
@@ -323,7 +308,7 @@ class Sword:
                         return True
         return False
 class Enemy:
-    def __init__(self, x, y):
+    def __init__(self, x, y,id):
         self.x = x
         self.y = y
         self.d_x = 0
@@ -332,13 +317,15 @@ class Enemy:
         self.is_alive = True
         self.frame = 0
         self.sword = Sword()
-    
+        self.id = id
+
     def __repr__(self) -> str:
-        return f"""Enemy: 
+        return f"""Enemy -- {id}: 
                    at coords: x - {self.x}, y - {self.y}
                    turned to {('left' if self.direction < 0 else 'right')},
                    {('alive' if self.is_alive < 0 else 'dead')},
                    sword -- {('active' if self.sword.active< 0 else 'not active')}"""
+    
 
     def update(self):
         self.d_x = self.direction
@@ -347,18 +334,39 @@ class Enemy:
             self.d_x = 0
             self.attack()
 
-        if is_pit(self.x, self.y, self.direction):
-            self.direction = self.direction* -1
-        if self.direction < 0 and is_wall(self.x - 1, self.y + 4) and can_jump(self.x,self.y,self.direction) == False:
-            self.direction = 1
-        elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
-            self.d_y = -3
-            self.d_x = -4
-        elif self.direction > 0 and is_wall(self.x + 8, self.y + 4 and can_jump(self.x,self.y,self.direction)== False):
-            self.direction = -1
-        elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
-            self.d_y = -3
-            self.d_x = 12
+        # if is_pit(self.x, self.y, self.direction):
+        #     self.direction = self.direction* -1
+        # if self.direction < 0 and is_wall(self.x - 1, self.y + 4) and can_jump(self.x,self.y,self.direction) == False:
+        #     self.direction = 1
+        # elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
+        #     self.d_y = -3
+        #     self.d_x = -4
+        # elif self.direction > 0 and is_wall(self.x + 8, self.y + 4 and can_jump(self.x,self.y,self.direction)== False):
+        #     self.direction = -1
+        # elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
+        #     self.d_y = -3
+        #     self.d_x = 12
+    
+        if self.direction < 0:
+            if self.x - 1 < 0:
+                self.direction = 1
+            if is_wall(self.x - 1, self.y + 4):
+                if can_jump(self.x,self.y,self.direction):
+                    self.d_y = -3
+                    self.d_x = -4
+                else:
+                    self.direction = 1
+            elif is_pit(self.x, self.y, self.direction):
+                    self.direction = 1
+        else:
+            if is_wall(self.x + 8, self.y + 4):
+                if can_jump(self.x,self.y,self.direction):
+                    self.d_y = -3
+                    self.d_x = 12
+                else:
+                    self.direction = -1
+            elif is_pit(self.x, self.y, self.direction):
+                    self.direction = -1
 
         if self.x < 0:
             self.x = 0 

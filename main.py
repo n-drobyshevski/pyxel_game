@@ -224,6 +224,8 @@ class Player:
 
         self.sword.update(self.x, self.y, self.direction,0)
         if self.is_alive == False:
+            for enemy in enemies:
+                print(enemy)
             self.y += 4
             time.sleep(2)
             self.can_reset = True
@@ -330,6 +332,13 @@ class Enemy:
         self.is_alive = True
         self.frame = 0
         self.sword = Sword()
+    
+    def __repr__(self) -> str:
+        return f"""Enemy: 
+                   at coords: x - {self.x}, y - {self.y}
+                   turned to {('left' if self.direction < 0 else 'right')},
+                   {('alive' if self.is_alive < 0 else 'dead')},
+                   sword -- {('active' if self.sword.active< 0 else 'not active')}"""
 
     def update(self):
         self.d_x = self.direction

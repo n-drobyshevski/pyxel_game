@@ -137,6 +137,16 @@ def can_jump(x,y,direction):
     
     return True
 
+def is_player(x,y):
+    x = x // 8
+    y = y // 8
+    tile = get_tile(x,y)
+    if tile == (0,1) or tile == (0,2):
+        print("=g=g=")
+        return True
+    return False
+
+
 def cleanup_list(list):
     i = 0
     while i < len(list):
@@ -162,7 +172,7 @@ class Player:
         
     def draw(self):
         v = (1 if self.falling else self.frame// 3 % 2) * 8 +8 
-        w = 8 if self.direction < 0 else -8
+        w = 8 if self.direction > 0 else -8
         # TODO: weird +8 
         pyxel.blt(self.x, self.y, img=0, u=0,v=v, w=w,h=self.height,colkey=TRANSPARENT_COLOR)
         self.sword.draw()
@@ -174,12 +184,12 @@ class Player:
         if is_spike(self.x, self.y):
             self.is_alive = False
         if pyxel.btn(pyxel.KEY_LEFT):
-            self.direction = 1
+            self.direction = -1
             self.d_x = -2
             self.frame += 1
             
         if pyxel.btn(pyxel.KEY_RIGHT):
-            self.direction = -1
+            self.direction = 1
             self.d_x = 2
             self.frame += 1
         
@@ -216,6 +226,12 @@ class Player:
 
         self.sword.update(self.x, self.y, self.direction)
     
+    def get_coords(self):
+        list = []
+        for x in range(self.x, self.x + 8):
+            for y in range (self.y, self.y+8):
+                list.append([x,y])
+        return list
 class Sword:
     
     def __init__(self):
@@ -231,7 +247,7 @@ class Sword:
         
     def draw(self):
         v = self.animation_frame*8
-        w = 8 if self.direction > 0 else -8
+        w = 8 if self.direction<0 else -8
         if self.active:
             pyxel.blt(self.x, self.y, img=0, u=16,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
     
@@ -239,9 +255,9 @@ class Sword:
     def update(self,x,y,direction):
         self.y = y
         self.direction = direction
-        if direction == 1:  
+        if direction == -1:  
             self.x = x-8
-        elif direction == -1:
+        elif direction == 1:
             self.x = x + 8
             
         self.animation_frame = self.frame // 3 % 4
@@ -250,12 +266,17 @@ class Sword:
             self.set_invisible()
             
         
-    def set_visible(self,wall):
-        index = (1 if self.direction == 1 else 0)
-        if wall[index] == False:
+    def set_visible(self,*args):
+        if args:
+            wall = args[0]
+            index = (1 if self.direction == 1 else 0)
+            if wall[index] == False:
+                self.active = True
+                self.frame=0
+        else:
             self.active = True
             self.frame=0
-        
+
     def set_invisible(self):
         self.active = False
     
@@ -268,22 +289,25 @@ class Enemy:
         self.direction = -1
         self.is_alive = True
         self.frame = 0
+        self.sword = Sword()
 
     def update(self):
         self.d_x = self.direction
         self.d_y = min(self.d_y + 1, 3)
+        if self.detect_player():
+            self.d_x = 0
+            self.attack()
+
         if is_pit(self.x, self.y, self.direction):
             self.direction = self.direction* -1
         if self.direction < 0 and is_wall(self.x - 1, self.y + 4) and can_jump(self.x,self.y,self.direction) == False:
             self.direction = 1
         elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
-            print("jump")
             self.d_y = -3
             self.d_x = -4
         elif self.direction > 0 and is_wall(self.x + 8, self.y + 4 and can_jump(self.x,self.y,self.direction)== False):
             self.direction = -1
         elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
-            print("jump")
             self.d_y = -3
             self.d_x = 12
 
@@ -292,11 +316,29 @@ class Enemy:
             self.direction = 1
         self.frame += 1
         self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
+        self.sword.update(self.x, self.y, self.direction)
+
+    def attack(self):
+        if self.sword.active == False:
+            self.sword.set_visible()
+
+    def detect_player(self):
+        player_coords = player.get_coords()
+        if self.direction > 0:
+            for [x, y] in player_coords:
+                if self.x+8  == x and self.y+4 == y:
+                    return True
+        if self.direction < 0:
+            for [x, y] in player_coords:
+                if self.x-1  == x and self.y+4 == y:
+                    return True
+        return False
 
     def draw(self):
         v = self.frame % 2 * 8 +8
         w = -6 if self.direction < 0 else 6 
         pyxel.blt(self.x, self.y, img=0, u=50,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
+        self.sword.draw()
 
 class App:
     def __init__(self):

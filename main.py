@@ -90,17 +90,16 @@ def spawn_enemy():
                 enemies.append(Enemy(x * 8, y * 8))
 
 def is_pit(x,y,direction):
-    if not (y +16 < 128 and x -8 > 0 and x +16 < MAP_MAX_X):
-        return False
-
+    # check if there is wall ahead
+    y0 = y+4
     if direction > 0:
-        if is_wall(x+8,y+4):
+        if is_wall(x+8,y0):
             return False
     else: 
-        if is_wall(x-1,y+4):
+        if is_wall(x-1,y0):
             return False
-
-    y1 = y +12
+    # check if there is wall one block ahead and one block down
+    y1 = y +8
     if direction > 0:
         if is_wall(x+8,y1):
             return False
@@ -108,6 +107,10 @@ def is_pit(x,y,direction):
         if is_wall(x-1,y1):
             return False
 
+    # return false if there is map border one block ahead and two block down
+    if not (y +16 < 128 and x -8 > 0 and x +16 < MAP_MAX_X):
+        return True
+    # check if there is wall one block ahead and two block down
     y2 = y +16
     if direction > 0:
         if is_wall(x+4,y2):

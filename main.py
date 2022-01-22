@@ -1,5 +1,6 @@
 import pyxel
 import math
+import time 
 
 WALL_TILE_X = 6
 TRANSPARENT_COLOR = 0
@@ -162,16 +163,20 @@ class Player:
         self.start_y = 0
         self.falling = False
         self.is_alive = True
-        
+        self.can_reset = False
+
     def draw(self):
-        v = (1 if self.falling else self.frame// 3 % 2) * 8 +8 
+        if self.is_alive:
+            v = (1 if self.falling else self.frame// 3 % 2) * 8 +8 
+        else: 
+            v = 24
         w = 8 if self.direction > 0 else -8
         # TODO: weird +8 
         pyxel.blt(self.x, self.y, img=0, u=0,v=v, w=w,h=self.height,colkey=TRANSPARENT_COLOR)
         self.sword.draw()
      
     def update(self):
-        global scroll_x
+        global scroll_x,enemies
         wall_x = [0,0]
         last_y = self.y
         if is_spike(self.x, self.y):
@@ -218,6 +223,10 @@ class Player:
             scroll_x = max(self.x - SCROLL_BORDER_X_L, 0)
 
         self.sword.update(self.x, self.y, self.direction,0)
+        if self.is_alive == False:
+            self.y += 4
+            time.sleep(2)
+            self.can_reset = True
     
     def get_coords(self):
         list = []
@@ -353,6 +362,7 @@ class Enemy:
         if self.sword.active == False:
             self.sword.set_visible()
 
+
     def detect_player(self):
         player_coords = player.get_coords()
         if self.direction > 0:
@@ -395,7 +405,7 @@ class App:
         pyxel.mouse(visible=True)
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
-        if player.is_alive == False:
+        if player.can_reset:
             reset()
             return
         player.update()
@@ -422,6 +432,7 @@ def reset():
     player.d_x = 0
     player.d_y = 0
     player.is_alive = True
+    player.can_reset = False
     enemies = []
     spawn_enemy()
 

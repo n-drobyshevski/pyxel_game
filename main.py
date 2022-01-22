@@ -137,16 +137,6 @@ def can_jump(x,y,direction):
     
     return True
 
-def is_player(x,y):
-    x = x // 8
-    y = y // 8
-    tile = get_tile(x,y)
-    if tile == (0,1) or tile == (0,2):
-        print("=g=g=")
-        return True
-    return False
-
-
 def cleanup_list(list):
     i = 0
     while i < len(list):
@@ -224,7 +214,7 @@ class Player:
         elif self.x < scroll_x + SCROLL_BORDER_X_L and scroll_x >= 0:
             scroll_x = max(self.x - SCROLL_BORDER_X_L, 0)
 
-        self.sword.update(self.x, self.y, self.direction)
+        self.sword.update(self.x, self.y, self.direction,0)
     
     def get_coords(self):
         list = []
@@ -243,16 +233,19 @@ class Sword:
         self.width = 8
         self.u=0
         self.direction = 1
+        self.skin = 0
         
         
-    def draw(self):
+    def draw(self): 
+        u = (16 if self.skin == 0 else 24)
         v = self.animation_frame*8
         w = 8 if self.direction<0 else -8
         if self.active:
-            pyxel.blt(self.x, self.y, img=0, u=16,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
+            pyxel.blt(self.x, self.y, img=0, u=u,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
     
     
-    def update(self,x,y,direction):
+    def update(self,x,y,direction, skin):
+        self.skin = skin
         self.y = y
         self.direction = direction
         if direction == -1:  
@@ -316,7 +309,7 @@ class Enemy:
             self.direction = 1
         self.frame += 1
         self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
-        self.sword.update(self.x, self.y, self.direction)
+        self.sword.update(self.x, self.y, self.direction, 1)
 
     def attack(self):
         if self.sword.active == False:

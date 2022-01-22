@@ -234,7 +234,7 @@ class Sword:
         self.u=0
         self.direction = 1
         self.skin = 0
-        
+        self.counter = 0
         
     def draw(self): 
         u = (16 if self.skin == 0 else 24)
@@ -255,7 +255,14 @@ class Sword:
             
         self.animation_frame = self.frame // 3 % 4
         self.frame += 1
+        print(self.counter)
+        if self.active and self.detect_player():    
+            player.is_alive = False
+        if self.active and self.detect_enemy():    
+            enemy = self.detect_enemy()
+            enemy.is_alive = False
         if self.animation_frame == 3:
+            self.counter +=1
             self.set_invisible()
             
         
@@ -270,9 +277,36 @@ class Sword:
             self.active = True
             self.frame=0
 
+
     def set_invisible(self):
         self.active = False
-    
+
+
+    def detect_enemy(self):
+        for enemy in enemies:
+            enemy_coords = enemy.get_coords()
+            if self.direction > 0:
+                for [x, y] in enemy_coords:
+                    if self.x+8  == x and self.y+4 == y:
+                        return enemy
+            if self.direction < 0:
+                for [x, y] in enemy_coords:
+                    if self.x-1  == x and self.y+4 == y:
+                        return enemy
+        return False
+
+
+    def detect_player(self):
+        player_coords = player.get_coords()
+        if self.direction > 0:
+            for [x, y] in player_coords:
+                if self.x+8  == x and self.y+4 == y:
+                    return True
+        if self.direction < 0:
+            for [x, y] in player_coords:
+                if self.x-1  == x and self.y+4 == y:
+                    return True
+        return False
 class Enemy:
     def __init__(self, x, y):
         self.x = x
@@ -330,9 +364,16 @@ class Enemy:
     def draw(self):
         v = self.frame % 2 * 8 +8
         w = -6 if self.direction < 0 else 6 
-        pyxel.blt(self.x, self.y, img=0, u=50,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
+        pyxel.blt(self.x, self.y, img=0, u=10,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
         self.sword.draw()
 
+    
+    def get_coords(self):
+        list = []
+        for x in range(self.x, self.x + 8):
+            for y in range (self.y, self.y+8):
+                list.append([x,y])
+        return list
 class App:
     def __init__(self):
         pyxel.init(128, 128, title="Pyxel Platformer", fps = 40)

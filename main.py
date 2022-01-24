@@ -86,7 +86,7 @@ def is_wall(x,y):
 def spawn_enemy():
     i = 0
     left_x = math.ceil(0 / 8)
-    right_x = math.floor(320 / 8)
+    right_x = math.floor(1144 / 8)
     for x in range(left_x, right_x + 1):
         for y in range(16):
             tile = get_tile(x, y)
@@ -136,6 +136,8 @@ def cleanup_list(list):
             i += 1
         else:
             list.pop(i)
+
+
 class Player:
     def __init__(self,x,y):
         self.direction = -1

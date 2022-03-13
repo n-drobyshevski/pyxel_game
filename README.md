@@ -1,14 +1,14 @@
 # pyxel_game
-Simple game using python and [Pyxel](https://github.com/kitao/pyxel)
+Simple game using Python and [Pyxel](https://github.com/kitao/pyxel)
 
 
 ## How to Install
 
-Unpack .zip
+Download and unpack .zip.
 
+Install pyxel library if you dont have it yet.
 
-install pyxel library i you dont have it yet
-### installing pyxel
+### Installing pyxel
 
 After installing [Python3](https://www.python.org/) (version 3.7 or higher), run the following command:
 ```
@@ -17,14 +17,14 @@ pip install -U pyxel
 
 ## Runing game
  
- in the cmd go to directory with unpacked game folder
+ In the cmd go to directory with unpacked game folder.
  (if you unpacked this to Desktop directory)
  ```
  cd Desktop
  cd pyxel_game
  ```
  
-and execute following command:
+And execute following command:
 ```
 pyxel run main.py
 ```

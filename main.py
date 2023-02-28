@@ -1,13 +1,20 @@
 import pyxel
+import math
+import time 
 
-
-WALL_TILE_X = 4
-TRANSPARENT_COLOR = 14
+WALL_TILE_X = 6
+TRANSPARENT_COLOR = 0
 SCROLL_BORDER_X_R = 80
 SCROLL_BORDER_X_L = 54
 JUMP_HEIGHT = 12
+TILE_SPAWN1 = (4, 2)
+MAP_MAX_X =  240 * 8
+SPIKE_X = [2,3] 
+SPIKE_Y = [5,6] 
 
 scroll_x = 0
+enemies =[] 
+
 
 def get_tile(tile_x, tile_y):
     return pyxel.tilemap(0).pget(tile_x, tile_y)
@@ -57,9 +64,82 @@ def move(x,y,d_x,d_y):
         d_x = 0
     return x,y,d_x,d_y, collision_side
 
+def is_spike(x,y):
+    x = x // 8
+    y = y // 8
+    tile = pyxel.tilemap(0).pget(x,y)
+    if tile[0] in SPIKE_X and tile[1] in SPIKE_Y:
+        return True
+    return False
 
-class Hero:
-    def __init__(self):
+
+# TODO: replace with get_tile()
+
+def is_wall(x,y):
+    x = x // 8
+    y = y // 8
+    tile = pyxel.tilemap(0).pget(x,y)
+    if tile[0] >= WALL_TILE_X:
+        return True
+    return False
+
+def spawn_enemy():
+    i = 0
+    left_x = math.ceil(0 / 8)
+    right_x = math.floor(1144 / 8)
+    for x in range(left_x, right_x + 1):
+        for y in range(16):
+            tile = get_tile(x, y)
+            if tile == TILE_SPAWN1:
+                enemies.append(Enemy(x * 8, y * 8,i))
+
+def is_pit(x,y,direction):
+    y1 = y +8
+    if direction > 0:
+        if is_wall(x+8,y1):
+            return False
+    else:
+        if is_wall(x-1,y1):
+            return False
+    
+    y2 = y +16
+    # return false if there is map border one block ahead and two block down
+    if not (y2 < 128):
+        return True
+    # check if there is wall one block ahead and two block down
+    if direction > 0:
+        if is_wall(x+8,y2):
+            return False
+    else:
+        if is_wall(x-1,y2):
+            return False
+    return True
+
+def can_jump(x,y,direction):
+    """ assumed that there is one block in front of personage"""
+    if x - 8 < 0:
+        return False
+
+    if direction > 0:
+        if is_wall(x+8,y-8):
+            return False
+    else:
+        if is_wall(x-1,y-8):
+            return False
+    return True
+
+def cleanup_list(list):
+    i = 0
+    while i < len(list):
+        elem = list[i]
+        if elem.is_alive:
+            i += 1
+        else:
+            list.pop(i)
+
+
+class Player:
+    def __init__(self,x,y):
         self.direction = -1
         self.frame = 0 
         self.height = 8
@@ -67,29 +147,36 @@ class Hero:
         self.sword = Sword()
         self.d_y = 0
         self.d_x = 0
-        self.x = 20
-        self.y =110
+        self.x = x
+        self.y =y
         self.start_y = 0
         self.falling = False
-        
+        self.is_alive = True
+        self.can_reset = False
+
     def draw(self):
-        v = (1 if self.falling else self.frame// 3 % 2) * 8 +8
-        w = -8 if self.direction > 0 else 8
+        if self.is_alive:
+            v = (1 if self.falling else self.frame// 3 % 2) * 8 +8 
+        else: 
+            v = 24
+        w = 8 if self.direction > 0 else -8
         # TODO: weird +8 
         pyxel.blt(self.x, self.y, img=0, u=0,v=v, w=w,h=self.height,colkey=TRANSPARENT_COLOR)
         self.sword.draw()
      
     def update(self):
-        global scroll_x
+        global scroll_x,enemies
         wall_x = [0,0]
         last_y = self.y
+        if is_spike(self.x, self.y):
+            self.is_alive = False
         if pyxel.btn(pyxel.KEY_LEFT):
-            self.direction = 1
+            self.direction = -1
             self.d_x = -2
             self.frame += 1
             
         if pyxel.btn(pyxel.KEY_RIGHT):
-            self.direction = -1
+            self.direction = 1
             self.d_x = 2
             self.frame += 1
         
@@ -115,15 +202,27 @@ class Hero:
             self.x = 0
         if self.x > 248*8:
             self.x = 248*8
+        if self.y > 128-self.height:
+            self.y = 128-self.height
         
         if self.x > scroll_x + SCROLL_BORDER_X_R:
-            scroll_x = min(self.x - SCROLL_BORDER_X_R, 240 * 8)
+            scroll_x = min(self.x - SCROLL_BORDER_X_R, MAP_MAX_X)
 
         elif self.x < scroll_x + SCROLL_BORDER_X_L and scroll_x >= 0:
             scroll_x = max(self.x - SCROLL_BORDER_X_L, 0)
 
-        self.sword.update(self.x, self.y, self.direction)
+        self.sword.update(self.x, self.y, self.direction,0)
+        if self.is_alive == False:
+            self.y += 4
+            time.sleep(2)
+            self.can_reset = True
     
+    def get_coords(self):
+        list = []
+        for x in range(self.x, self.x + 8):
+            for y in range (self.y, self.y+8):
+                list.append([x,y])
+        return list
 class Sword:
     
     def __init__(self):
@@ -132,49 +231,189 @@ class Sword:
         self.active = False
         self.frame = 0 
         self.animation_frame = 0
-        self.height = 8
         self.width = 8
         self.u=0
         self.direction = 1
+        self.skin = 0
+        self.counter = 0
         
-        
-    def draw(self):
+    def draw(self): 
+        u = (16 if self.skin == 0 else 24)
+        v = self.animation_frame*8
+        w = 8 if self.direction<0 else -8
         if self.active:
-            pyxel.blt(self.x, self.y, img=0, u=self.u,v=self.height*self.animation_frame, w=self.width,h=self.height,colkey=TRANSPARENT_COLOR)
+            pyxel.blt(self.x, self.y, img=0, u=u,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
     
     
-    def update(self,x,y,direction):
+    def update(self,x,y,direction, skin):
+        self.skin = skin
         self.y = y
         self.direction = direction
-        if direction == 1:
-            self.u = 16
+        if direction == -1:  
             self.x = x-8
-        elif direction == -1:
+        elif direction == 1:
             self.x = x + 8
-            self.u = 24
-        else: 
-            self.u = 50
             
         self.animation_frame = self.frame // 3 % 4
         self.frame += 1
+        if self.active and self.detect_player():    
+            player.is_alive = False
+        if self.active and self.detect_enemy():    
+            enemy = self.detect_enemy()
+            enemy.is_alive = False
         if self.animation_frame == 3:
+            self.counter +=1
             self.set_invisible()
             
         
-    def set_visible(self,wall):
-        index = (1 if self.direction == 1 else 0)
-        if wall[index] == False:
+    def set_visible(self,*args):
+        if args:
+            wall = args[0]
+            index = (1 if self.direction == 1 else 0)
+            if wall[index] == False:
+                self.active = True
+                self.frame=0
+        else:
             self.active = True
             self.frame=0
-        
+
+
     def set_invisible(self):
         self.active = False
+
+
+    def detect_enemy(self):
+        for enemy in enemies:
+            enemy_coords = enemy.get_coords()
+            if self.direction > 0:
+                for [x, y] in enemy_coords:
+                    if self.x+8  == x and self.y+4 == y:
+                        return enemy
+            if self.direction < 0:
+                for [x, y] in enemy_coords:
+                    if self.x-1  == x and self.y+4 == y:
+                        return enemy
+        return False
+
+
+    def detect_player(self):
+        player_coords = player.get_coords()
+        if self.direction > 0:
+            for [x, y] in player_coords:
+                for xi in range(self.x, self.x +8):
+                    if xi  == x and self.y+4 == y:
+                        return True
+        if self.direction < 0:
+            for [x, y] in player_coords:
+                for xi in range(self.x, self.x -9):
+                    if xi  == x and self.y+4 == y:
+                        return True
+        return False
+class Enemy:
+    def __init__(self, x, y,id):
+        self.x = x
+        self.y = y
+        self.d_x = 0
+        self.d_y = 0
+        self.direction = -1
+        self.is_alive = True
+        self.frame = 0
+        self.sword = Sword()
+        self.id = id
+
+    def __repr__(self) -> str:
+        return f"""Enemy -- {id}: 
+                   at coords: x - {self.x}, y - {self.y}
+                   turned to {('left' if self.direction < 0 else 'right')},
+                   {('alive' if self.is_alive < 0 else 'dead')},
+                   sword -- {('active' if self.sword.active< 0 else 'not active')}"""
     
+
+    def update(self):
+        self.d_x = self.direction
+        self.d_y = min(self.d_y + 1, 3)
+        if self.detect_player():
+            self.d_x = 0
+            self.attack()
+
+        # if is_pit(self.x, self.y, self.direction):
+        #     self.direction = self.direction* -1
+        # if self.direction < 0 and is_wall(self.x - 1, self.y + 4) and can_jump(self.x,self.y,self.direction) == False:
+        #     self.direction = 1
+        # elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
+        #     self.d_y = -3
+        #     self.d_x = -4
+        # elif self.direction > 0 and is_wall(self.x + 8, self.y + 4 and can_jump(self.x,self.y,self.direction)== False):
+        #     self.direction = -1
+        # elif self.direction < 0 and can_jump(self.x,self.y,self.direction):
+        #     self.d_y = -3
+        #     self.d_x = 12
+    
+        if self.direction < 0:
+            if self.x - 1 < 0:
+                self.direction = 1
+            if is_wall(self.x - 1, self.y + 4):
+                if can_jump(self.x,self.y,self.direction):
+                    self.d_y = -3
+                    self.d_x = -4
+                else:
+                    self.direction = 1
+            elif is_pit(self.x, self.y, self.direction):
+                    self.direction = 1
+        else:
+            if is_wall(self.x + 8, self.y + 4):
+                if can_jump(self.x,self.y,self.direction):
+                    self.d_y = -3
+                    self.d_x = 12
+                else:
+                    self.direction = -1
+            elif is_pit(self.x, self.y, self.direction):
+                    self.direction = -1
+
+        if self.x < 0:
+            self.x = 0 
+            self.direction = 1
+        self.frame += 1
+        self.x, self.y, self.d_x, self.d_y, collision_side = move(self.x, self.y, self.d_x, self.d_y)
+        self.sword.update(self.x, self.y, self.direction, 1)
+
+    def attack(self):
+        if self.sword.active == False:
+            self.sword.set_visible()
+
+
+    def detect_player(self):
+        player_coords = player.get_coords()
+        if self.direction > 0:
+            for [x, y] in player_coords:
+                if self.x+8  == x and self.y+4 == y:
+                    return True
+        if self.direction < 0:
+            for [x, y] in player_coords:
+                if self.x-1  == x and self.y+4 == y:
+                    return True
+        return False
+
+    def draw(self):
+        v = self.frame % 2 * 8 +8
+        w = -6 if self.direction < 0 else 6 
+        pyxel.blt(self.x, self.y, img=0, u=10,v=v, w=w,h=8,colkey=TRANSPARENT_COLOR)
+        self.sword.draw()
+
+    
+    def get_coords(self):
+        list = []
+        for x in range(self.x, self.x + 8):
+            for y in range (self.y, self.y+8):
+                list.append([x,y])
+        return list
 class App:
     def __init__(self):
         pyxel.init(128, 128, title="Pyxel Platformer", fps = 40)
         pyxel.load("my_resource.pyxres")
-        self.hero = Hero()
+        global player
+        player = Player(0,0)
+        spawn_enemy()
         pyxel.run(self.update, self.draw)
         self.setup()
 
@@ -185,8 +424,13 @@ class App:
         pyxel.mouse(visible=True)
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             pyxel.quit()
-            
-        self.hero.update()
+        if player.can_reset:
+            reset()
+            return
+        player.update()
+        for enemy in enemies:
+            enemy.update()
+        cleanup_list(enemies)
 
     def draw(self):
         pyxel.cls(0)
@@ -195,6 +439,20 @@ class App:
         
         # Draw characters
         pyxel.camera(scroll_x, 0)
-        self.hero.draw()
-        
+        player.draw()
+        for enemy in enemies:
+            enemy.draw()
+
+def reset():
+    global scroll_x, enemies
+    scroll_x = 0
+    player.x = 0
+    player.y = 0
+    player.d_x = 0
+    player.d_y = 0
+    player.is_alive = True
+    player.can_reset = False
+    enemies = []
+    spawn_enemy()
+
 App()
